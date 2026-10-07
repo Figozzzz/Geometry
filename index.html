@@ -96,6 +96,18 @@
 		}
 	</style>
 		<script type="text/javascript">
+			// Optional backing-store scale for GPU-bound devices; input uses the same DPR.
+			(function () {
+				var scale = Number(new URLSearchParams(window.location.search).get("renderscale"));
+				if (!Number.isFinite(scale) || scale < 0.5 || scale > 1.0) return;
+				var dpr = window.devicePixelRatio || 1;
+				try {
+					Object.defineProperty(window, "devicePixelRatio", {
+						configurable: true,
+						value: dpr * scale
+					});
+				} catch (e) {}
+			})();
 			window.__eaglerPerfEnabled = window.location.search.indexOf("perfdebug") >= 0;
 			// Local diagnostic A/B controls.
 			(function () {
