@@ -419,7 +419,7 @@
 			// Use data URLs instead of the blob-origin probe.
 			disableBlobURLs: true,
 			// ?singlethread disables all workers; ?nomesh disables mesh workers.
-			singleThreadMode: true,
+			singleThreadMode: window.location.search.indexOf("singlethread") >= 0,
 				serverWorker: window.location.search.indexOf("singlethread") < 0,
 				meshWorkers: window.location.search.indexOf("singlethread") < 0
 					&& window.location.search.indexOf("nomesh") < 0,
