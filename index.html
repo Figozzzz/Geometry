@@ -101,7 +101,9 @@
 			// Local diagnostic A/B controls.
 			(function () {
 				var params = new URLSearchParams(window.location.search);
-				window.__eaglerChunkUnloadHardCap = params.get("chunkunload") === "capped";
+				var lowPower = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4)
+					|| (navigator.deviceMemory && navigator.deviceMemory <= 4);
+				window.__eaglerChunkUnloadHardCap = params.get("chunkunload") === "capped" || lowPower;
 			})();
 			// Crash recovery.
 			(function () {
