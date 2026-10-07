@@ -98,15 +98,29 @@
 		<script type="text/javascript">
 			// Optional backing-store scale for GPU-bound devices; input uses the same DPR.
 			(function () {
-				var scale = Number(new URLSearchParams(window.location.search).get("renderscale"));
-				if (!Number.isFinite(scale) || scale < 0.5 || scale > 1.0) return;
-				var dpr = window.devicePixelRatio || 1;
-				try {
-					Object.defineProperty(window, "devicePixelRatio", {
-						configurable: true,
-						value: dpr * scale
-					});
-				} catch (e) {}
+				var params = new URLSearchParams(window.location.search);
+				var scale = Number(params.get("renderscale"));
+				if (Number.isFinite(scale) && scale >= 0.5 && scale <= 1.0) {
+					var dpr = window.devicePixelRatio || 1;
+					try {
+						Object.defineProperty(window, "devicePixelRatio", {
+							configurable: true,
+							value: dpr * scale
+						});
+					} catch (e) {}
+					return;
+				}
+				var lowPower = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4)
+					|| (navigator.deviceMemory && navigator.deviceMemory <= 4);
+				if (lowPower) {
+					var dpr = window.devicePixelRatio || 1;
+					try {
+						Object.defineProperty(window, "devicePixelRatio", {
+							configurable: true,
+							value: dpr * 0.8
+						});
+					} catch (e) {}
+				}
 			})();
 			window.__eaglerPerfEnabled = window.location.search.indexOf("perfdebug") >= 0;
 			// Local diagnostic A/B controls.
@@ -402,13 +416,14 @@
 			window.addEventListener("touchstart", resumeAll, true);
 		})();
 
-		// Wasm-GC workers have separate Java heaps. Normal mode deliberately does not
-		// guess an eager pool size here: the Java pool starts one isolate, observes
-		// frame/queue/heap headroom, and proves each additional worker with a measured
-		// trial. ?meshworkers=N remains an exact diagnostic A/B override only.
+		// Wasm-GC workers have separate Java heaps. Low-end devices benefit from a
+		// slightly more conservative default so chunk load spikes don't hammer the UI.
 		function chooseMeshWorkerCount() {
 			var match = /[?&]meshworkers=([1-4])(?:&|$)/.exec(window.location.search);
 			if (match) return Number(match[1]);
+			var cores = navigator.hardwareConcurrency || 4;
+			var memory = navigator.deviceMemory || 0;
+			if (cores <= 4 || memory <= 4) return 2;
 			return -1;
 		}
 		// The hosted release may point this at a signed bundle on a separate
